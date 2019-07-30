@@ -1,5 +1,5 @@
 {
-  "name": "skyfall-plugin-smtp",
+  "name": "@mdbarr/skyfall-plugin-smtp",
   "version": "0.1.0",
   "description": "Skyfall SMTP Server Plugin",
   "main": "index.js",
