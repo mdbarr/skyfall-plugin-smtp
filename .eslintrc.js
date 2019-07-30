@@ -26,7 +26,6 @@ module.exports = {
     'comma-dangle': ['error', 'never'],
     'comma-spacing': 'error',
     'comma-style': [ 'error', 'last' ],
-    'complexity': [ 'error', 20 ],
     'consistent-return': 'error',
     'constructor-super': 'error',
     'default-case': 'error',

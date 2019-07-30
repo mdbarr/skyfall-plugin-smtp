@@ -10,11 +10,36 @@ function SMTP(skyfall, options) {
   const host = options.host || '0.0.0.0';
 
   const callbacks = {
-    onAuth: null,
-    onConnect: null,
-    onMailFrom: null,
-    onRcptTo: null
+    onAuth: options.onAuth || null,
+    onConnect: options.onConnect || null,
+    onMailFrom: options.onMailFrom || null,
+    onRcptTo: options.onRcptTo || null
   };
+
+  this.users = new Map();
+  if (options.users) {
+    for (const user in options.users) {
+      this.users.set(user, options.users[user]);
+    }
+  }
+  this.addUser = (username, password) => {
+    this.users.set(username, password);
+  };
+
+  this.domains = new Set();
+  if (options.domain) {
+    this.domains.add(options.domain);
+  }
+  if (options.domains) {
+    for (const domain of options.domains) {
+      this.domains.add(domain);
+    }
+  }
+  this.addDomain = (domain) => {
+    this.domains.add(domain);
+  };
+
+  //////////
 
   const onAuth = (auth, session, callback) => {
     if (callbacks.onAuth && typeof callbacks.onAuth === 'function') {
@@ -23,6 +48,11 @@ function SMTP(skyfall, options) {
       }
       const result = callbacks.onAuth(auth, session);
       return callback(null, result);
+    } else if (this.users.size) {
+      if (this.users.has(auth.username) && this.users.get(auth.username) === auth.password) {
+        return callback(null, { user: auth.username });
+      }
+      return callback(new Error('Invalid username or password'));
     }
     return callback(null, { user: auth.username });
   };
@@ -62,6 +92,12 @@ function SMTP(skyfall, options) {
         return callback();
       }
       return callback(new Error(`Mail to ${ address } not accepted`));
+    } else if (this.domains.size) {
+      const domain = address.replace(/^.*@/, '');
+      if (this.domains.has(domain)) {
+        return callback();
+      }
+      return callback(new Error(`Mail to ${ address } not accepted`));
     }
     return callback();
   };
@@ -74,7 +110,7 @@ function SMTP(skyfall, options) {
       skyfall.events.emit({
         type: 'smtp:server:message',
         data: {
-          message,
+          ...message,
           session
         },
         source: id
@@ -83,8 +119,10 @@ function SMTP(skyfall, options) {
     });
   };
 
+  //////////
+
   this.server = new SMTPServer({
-    secure: options.secure || false,
+    secure: Boolean(options.secure || options.key && options.certificate),
     key: options.key ? fs.readFileSync(options.key) : null,
     certificate: options.certificate ? fs.readFileSync(options.certificate) : null,
     name: options.name || 'skyfall-smtp-server',
