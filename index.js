@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const { SMTPServer } = require('smtp-server');
+const { simpleParser } = require('mailparser');
 
 function SMTP(skyfall, options) {
   this.id = skyfall.utils.id();
@@ -42,6 +43,23 @@ function SMTP(skyfall, options) {
     return callback();
   };
 
+  const onData = (stream, session, callback) => {
+    simpleParser(stream, (error, message) => {
+      if (error) {
+        return callback(error);
+      }
+      skyfall.events.emit({
+        type: 'smtp:server:message',
+        data: {
+          message,
+          session
+        },
+        source: this.id
+      });
+      return true;
+    });
+  };
+
   this.server = new SMTPServer({
     secure: options.secure || false,
     key: options.key ? fs.readFileSync(options.key) : null,
@@ -59,7 +77,8 @@ function SMTP(skyfall, options) {
     onAuth,
     onConnect,
     onMailFrom,
-    onRcptTo
+    onRcptTo,
+    onData
   });
 
   this.server.on('error', (error) => {

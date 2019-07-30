@@ -8,6 +8,7 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
+    "mailparser": "^2.7.1",
     "smtp-server": "^3.5.0"
   },
   "devDependencies": {
