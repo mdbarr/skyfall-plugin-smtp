@@ -6,6 +6,8 @@ const { simpleParser } = require('mailparser');
 
 function SMTP(skyfall, options) {
   const id = skyfall.utils.id();
+  const port = Number(options.port) || 25;
+  const host = options.host || '0.0.0.0';
 
   const callbacks = {
     onAuth: null,
@@ -109,6 +111,36 @@ function SMTP(skyfall, options) {
       source: id
     });
   });
+
+  const smtp = {
+    id,
+    port,
+    host
+  };
+
+  skyfall.events.emit({
+    type: 'smtp:server:starting',
+    data: smtp,
+    source: id
+  });
+
+  this.server.listen(port, host, (error) => {
+    if (error) {
+      skyfall.events.emit({
+        type: 'smtp:server:error',
+        data: error,
+        source: id
+      });
+    } else {
+      skyfall.events.emit({
+        type: 'smtp:server:started',
+        data: smtp,
+        source: id
+      });
+    }
+  });
+
+  return smtp;
 }
 
 module.exports = {
