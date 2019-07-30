@@ -5,9 +5,9 @@ const { SMTPServer } = require('smtp-server');
 const { simpleParser } = require('mailparser');
 
 function SMTP(skyfall, options) {
-  this.id = skyfall.utils.id();
+  const id = skyfall.utils.id();
 
-  this.callbacks = {
+  const callbacks = {
     onAuth: null,
     onConnect: null,
     onMailFrom: null,
@@ -15,30 +15,51 @@ function SMTP(skyfall, options) {
   };
 
   const onAuth = (auth, session, callback) => {
-    if (this.callbacks.onAuth && typeof this.callbacks.onAuth === 'function') {
-      return this.callbacks.onAuth(auth, session, callback);
+    if (callbacks.onAuth && typeof callbacks.onAuth === 'function') {
+      if (callbacks.onAuth.length === 3) {
+        return callbacks.onAuth(auth, session, callback);
+      }
+      const result = callbacks.onAuth(auth, session);
+      return callback(null, result);
     }
     return callback(null, { user: auth.username });
   };
 
   const onConnect = (session, callback) => {
-    console.log(session.remoteAddress);
-    if (this.callbacks.onConnect && typeof this.callbacks.onConnect === 'function') {
-      return this.callbacks.onConnect(session, callback);
+    if (callbacks.onConnect && typeof callbacks.onConnect === 'function') {
+      if (callbacks.onConnect.length === 2) {
+        return callbacks.onConnect(session, callback);
+      }
+      if (callbacks.onConnection(session.remoteAddress)) {
+        return callback();
+      }
+      return callback(new Error(`Connection not allowed from ${ session.remoteAddress }`));
     }
     return callback();
   };
 
   const onMailFrom = (address, session, callback) => {
-    if (this.callbacks.onMailFrom && typeof this.callbacks.onMailFrom === 'function') {
-      return this.callbacks.onMailFrom(address, session, callback);
+    if (callbacks.onMailFrom && typeof callbacks.onMailFrom === 'function') {
+      if (callback.onMailFrom.length === 3) {
+        return callbacks.onMailFrom(address, session, callback);
+      }
+      if (callbacks.onMailFrom(address, session)) {
+        return callback();
+      }
+      return callback(new Error(`Mail from ${ address } not accepted`));
     }
     return callback();
   };
 
   const onRcptTo = (address, session, callback) => {
-    if (this.callbacks.onRcptTo && typeof this.callbacks.onRcptTo === 'function') {
-      return this.callbacks.onRcptTo(address, session, callback);
+    if (callbacks.onRcptTo && typeof callbacks.onRcptTo === 'function') {
+      if (callbacks.onRcptTo.length === 3) {
+        return callbacks.onRcptTo(address, session, callback);
+      }
+      if (callbacks.onRcptTo(address, session)) {
+        return callback();
+      }
+      return callback(new Error(`Mail to ${ address } not accepted`));
     }
     return callback();
   };
@@ -54,7 +75,7 @@ function SMTP(skyfall, options) {
           message,
           session
         },
-        source: this.id
+        source: id
       });
       return true;
     });
@@ -85,7 +106,7 @@ function SMTP(skyfall, options) {
     skyfall.events.emit({
       type: 'smtp:server:error',
       data: error,
-      source: this.id
+      source: id
     });
   });
 }
