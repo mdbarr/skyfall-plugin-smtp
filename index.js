@@ -118,6 +118,7 @@ function SMTP(skyfall, options) {
       if (error) {
         return callback(error);
       }
+
       skyfall.events.emit({
         type: 'smtp:server:message',
         data: {
@@ -126,7 +127,8 @@ function SMTP(skyfall, options) {
         },
         source: id
       });
-      return true;
+
+      return callback();
     });
   };
 
