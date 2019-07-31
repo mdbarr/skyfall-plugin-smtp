@@ -10,12 +10,7 @@ function SMTP(skyfall, options) {
   const port = Number(options.port) || 25;
   const host = options.host || '0.0.0.0';
 
-  const callbacks = {
-    onAuth: options.onAuth || null,
-    onConnect: options.onConnect || null,
-    onMailFrom: options.onMailFrom || null,
-    onRcptTo: options.onRcptTo || null
-  };
+  const callbacks = {};
 
   this.users = new Map();
   if (options.users) {
@@ -134,52 +129,79 @@ function SMTP(skyfall, options) {
 
   //////////
 
-  this.server = new SMTPServer({
-    secure: Boolean(options.secure || options.key && options.certificate),
-    key: options.key ? fs.readFileSync(options.key) : null,
-    certificate: options.certificate ? fs.readFileSync(options.certificate) : null,
-    name: options.name || 'skyfall-smtp-server',
-    size: Number(options.size) || 10485760, // 10MB
-    authOptional: options.authOptional !== undefined ? options.authOptional :
-      Boolean(this.users.size || callbacks.onAuth),
-    allowInsecureAuth: options.allowInsecureAuth !== undefined ? options.allowInsecureAuth : true,
-    disableReverseLookup: options.disableReverseLookup !== undefined ?
-      options.disableReverseLookup : false,
-    maxClients: options.maxClients || Infinity,
-    useProxy: options.useProxy !== undefined ? options.useProxy : false,
-    lmtp: options.lmtp !== undefined ? options.lmtp : false,
-    socketTimeout: Number(options.socketTimeout) || 60000, // 60s
-    closeTimeout: Number(options.closeTimeout) || 30000, // 30s
-    onAuth,
-    onConnect,
-    onMailFrom,
-    onRcptTo,
-    onData
-  });
+  this.configure = (config) => {
+    callbacks.onAuth = config.onAuth || null;
+    callbacks.onConnect = config.onConnect || null;
+    callbacks.onMailFrom = config.onMailFrom || null;
+    callbacks.onRcptTo = config.onRcptTo || null;
 
-  this.server.on('error', (error) => {
-    skyfall.events.emit({
-      type: 'smtp:server:error',
-      data: error,
-      source: id
+    this.server = new SMTPServer({
+      secure: Boolean(config.secure || config.key && config.certificate),
+      key: config.key ? fs.readFileSync(config.key) : null,
+      certificate: config.certificate ? fs.readFileSync(config.certificate) : null,
+      name: config.name || 'skyfall-smtp-server',
+      size: Number(config.size) || 10485760, // 10MB
+      authOptional: config.authOptional !== undefined ? config.authOptional :
+        Boolean(this.users.size || callbacks.onAuth),
+      allowInsecureAuth: config.allowInsecureAuth !== undefined ?
+        config.allowInsecureAuth : true,
+      disableReverseLookup: config.disableReverseLookup !== undefined ?
+        config.disableReverseLookup : false,
+      maxClients: config.maxClients || Infinity,
+      useProxy: config.useProxy !== undefined ? config.useProxy : false,
+      lmtp: config.lmtp !== undefined ? config.lmtp : false,
+      socketTimeout: Number(config.socketTimeout) || 60000, // 60s
+      closeTimeout: Number(config.closeTimeout) || 30000, // 30s
+      onAuth,
+      onConnect,
+      onMailFrom,
+      onRcptTo,
+      onData
     });
-  });
 
-  this.configuration = {
-    id,
-    port,
-    host,
-    mode: options.lmtp ? 'lmtp' : 'smtp'
+    this.server.on('error', (error) => {
+      skyfall.events.emit({
+        type: 'smtp:server:error',
+        data: error,
+        source: id
+      });
+    });
+
+    this.configuration = {
+      id,
+      port,
+      host,
+      mode: config.lmtp ? 'lmtp' : 'smtp'
+    };
+
+    skyfall.utils.hidden(this.configuration, 'start', this.start);
+
+    return this.configuration;
   };
 
   this.start = (callback) => {
+    if (!this.server || !this.configuration) {
+      const error = new Error('smtp server not configured');
+
+      skyfall.events.emit({
+        type: 'smtp:server:error',
+        data: error,
+        source: id
+      });
+
+      if (callback) {
+        return callback(error);
+      }
+      return error;
+    }
+
     skyfall.events.emit({
       type: 'smtp:server:starting',
       data: this.configuration,
       source: id
     });
 
-    this.server.listen(port, host, (error) => {
+    return this.server.listen(port, host, (error) => {
       if (error) {
         skyfall.events.emit({
           type: 'smtp:server:error',
@@ -192,6 +214,7 @@ function SMTP(skyfall, options) {
         }
         return error;
       }
+
       skyfall.events.emit({
         type: 'smtp:server:started',
         data: this.configuration,
@@ -205,9 +228,9 @@ function SMTP(skyfall, options) {
     });
   };
 
-  skyfall.utils.hidden(this.configuration, 'start', this.start);
-
-  return this.configuration;
+  if (options) {
+    return this.configure(options);
+  }
 }
 
 module.exports = {
