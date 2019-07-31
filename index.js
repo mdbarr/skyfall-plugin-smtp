@@ -162,7 +162,8 @@ function SMTP(skyfall, options) {
     this.server = new SMTPServer({
       secure,
       key: config.key ? fs.readFileSync(config.key) : null,
-      certificate: config.certificate ? fs.readFileSync(config.certificate) : null,
+      cert: (config.certificate || config.cert) ?
+        fs.readFileSync(config.certificate || config.cert) : null,
       name: config.name || 'skyfall-smtp-server',
       size: Number(config.size) || 10485760, // 10MB
       authOptional: config.authOptional !== undefined ? config.authOptional :
