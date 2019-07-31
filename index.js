@@ -3,6 +3,7 @@
 const fs = require('fs');
 const { SMTPServer } = require('smtp-server');
 const { simpleParser } = require('mailparser');
+const IPAccessControl = require('@mdbarr/ip-access-control');
 
 function SMTP(skyfall, options) {
   const id = skyfall.utils.id();
@@ -39,6 +40,11 @@ function SMTP(skyfall, options) {
     this.domains.add(domain);
   };
 
+  this.accessControl = null;
+  if (options.access) {
+    this.accessControl = new IPAccessControl(options.acess);
+  }
+
   //////////
 
   const onAuth = (auth, session, callback) => {
@@ -62,7 +68,12 @@ function SMTP(skyfall, options) {
       if (callbacks.onConnect.length === 2) {
         return callbacks.onConnect(session, callback);
       }
-      if (callbacks.onConnection(session.remoteAddress)) {
+      if (callbacks.onConnection(session)) {
+        return callback();
+      }
+      return callback(new Error(`Connection not allowed from ${ session.remoteAddress }`));
+    } else if (typeof this.accessControl === 'function') {
+      if (this.accessControl.check(session.remoteAddress)) {
         return callback();
       }
       return callback(new Error(`Connection not allowed from ${ session.remoteAddress }`));
