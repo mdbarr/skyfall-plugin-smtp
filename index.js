@@ -166,7 +166,7 @@ function SMTP(skyfall, options) {
       name: config.name || 'skyfall-smtp-server',
       size: Number(config.size) || 10485760, // 10MB
       authOptional: config.authOptional !== undefined ? config.authOptional :
-        Boolean(users.size || callbacks.onAuth),
+        !Boolean(users.size || callbacks.onAuth),
       allowInsecureAuth: config.allowInsecureAuth !== undefined ?
         config.allowInsecureAuth : true,
       disableReverseLookup: config.disableReverseLookup !== undefined ?
