@@ -140,7 +140,8 @@ function SMTP(skyfall, options) {
     certificate: options.certificate ? fs.readFileSync(options.certificate) : null,
     name: options.name || 'skyfall-smtp-server',
     size: Number(options.size) || 10485760, // 10MB
-    authOptional: options.authOptional || true,
+    authOptional: (options.authOptional !== undefined) ? options.authOptional :
+      Boolean(this.users.size || callbacks.onAuth),
     allowInsecureAuth: options.allowInsecureAuth || true,
     disableReverseLookup: options.disableReverseLookup || false,
     maxClients: options.maxClients || Infinity,
