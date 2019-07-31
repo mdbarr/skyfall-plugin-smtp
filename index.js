@@ -166,7 +166,8 @@ function SMTP(skyfall, options) {
   const smtp = {
     id,
     port,
-    host
+    host,
+    mode: options.lmtp ? 'lmtp' : 'smtp'
   };
 
   this.start = (callback) => {
