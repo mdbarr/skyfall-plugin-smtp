@@ -7,38 +7,29 @@ const IPAccessControl = require('@mdbarr/ip-access-control');
 
 function SMTP(skyfall, options) {
   const id = skyfall.utils.id();
-  const port = Number(options.port) || 25;
-  const host = options.host || '0.0.0.0';
+
+  let port = 25;
+  let host = '0.0.0.0';
+  let secure = false;
 
   const callbacks = {};
 
-  this.users = new Map();
-  if (options.users) {
-    for (const user in options.users) {
-      this.users.set(user, options.users[user]);
-    }
-  }
+  //////////
+
+  const users = new Map();
   this.addUser = (username, password) => {
-    this.users.set(username, password);
+    users.set(username, password);
   };
 
-  this.domains = new Set();
-  if (options.domain) {
-    this.domains.add(options.domain);
-  }
-  if (options.domains) {
-    for (const domain of options.domains) {
-      this.domains.add(domain);
-    }
-  }
+  const domains = new Set();
   this.addDomain = (domain) => {
-    this.domains.add(domain);
+    domains.add(domain);
   };
 
-  this.accessControl = null;
-  if (options.access) {
-    this.accessControl = new IPAccessControl(options.acess);
-  }
+  let accessControl = null;
+  this.setAccess = (access) => {
+    accessControl = new IPAccessControl(access);
+  };
 
   //////////
 
@@ -49,8 +40,8 @@ function SMTP(skyfall, options) {
       }
       const result = callbacks.onAuth(auth, session);
       return callback(null, result);
-    } else if (this.users.size) {
-      if (this.users.has(auth.username) && this.users.get(auth.username) === auth.password) {
+    } else if (users.size) {
+      if (users.has(auth.username) && users.get(auth.username) === auth.password) {
         return callback(null, { user: auth.username });
       }
       return callback(new Error('Invalid username or password'));
@@ -67,8 +58,8 @@ function SMTP(skyfall, options) {
         return callback();
       }
       return callback(new Error(`Connection not allowed from ${ session.remoteAddress }`));
-    } else if (typeof this.accessControl === 'function') {
-      if (this.accessControl.check(session.remoteAddress)) {
+    } else if (typeof accessControl === 'function') {
+      if (accessControl.check(session.remoteAddress)) {
         return callback();
       }
       return callback(new Error(`Connection not allowed from ${ session.remoteAddress }`));
@@ -98,9 +89,9 @@ function SMTP(skyfall, options) {
         return callback();
       }
       return callback(new Error(`Mail to ${ address.address } not accepted`));
-    } else if (this.domains.size) {
+    } else if (domains.size) {
       const domain = address.address.replace(/^.*@/, '');
-      if (this.domains.has(domain)) {
+      if (domains.has(domain)) {
         return callback();
       }
       return callback(new Error(`Mail to ${ address.address } not accepted`));
@@ -130,19 +121,52 @@ function SMTP(skyfall, options) {
   //////////
 
   this.configure = (config) => {
+    secure = Boolean(config.secure || config.key && config.certificate);
+
+    if (config.port) {
+      if (config.port === 'auto') {
+        port = secure ? 587 : 25;
+      } else {
+        port = Number(config.port) || 25;
+      }
+    }
+
+    if (config.host) {
+      host = config.host;
+    }
+
+    if (config.users) {
+      for (const user in config.users) {
+        users.set(user, config.users[user]);
+      }
+    }
+
+    if (config.domain) {
+      domains.add(config.domain);
+    }
+    if (config.domains) {
+      for (const domain of config.domains) {
+        domains.add(domain);
+      }
+    }
+
+    if (config.access) {
+      accessControl = new IPAccessControl(config.acess);
+    }
+
     callbacks.onAuth = config.onAuth || null;
     callbacks.onConnect = config.onConnect || null;
     callbacks.onMailFrom = config.onMailFrom || null;
     callbacks.onRcptTo = config.onRcptTo || null;
 
     this.server = new SMTPServer({
-      secure: Boolean(config.secure || config.key && config.certificate),
+      secure,
       key: config.key ? fs.readFileSync(config.key) : null,
       certificate: config.certificate ? fs.readFileSync(config.certificate) : null,
       name: config.name || 'skyfall-smtp-server',
       size: Number(config.size) || 10485760, // 10MB
       authOptional: config.authOptional !== undefined ? config.authOptional :
-        Boolean(this.users.size || callbacks.onAuth),
+        Boolean(users.size || callbacks.onAuth),
       allowInsecureAuth: config.allowInsecureAuth !== undefined ?
         config.allowInsecureAuth : true,
       disableReverseLookup: config.disableReverseLookup !== undefined ?
@@ -228,8 +252,8 @@ function SMTP(skyfall, options) {
     });
   };
 
-  if (options) {
-    return this.configure(options);
+  if (Object.keys(options).length) {
+    this.configure(options);
   }
 }
 
