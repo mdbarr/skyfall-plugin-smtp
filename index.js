@@ -163,7 +163,7 @@ function SMTP(skyfall, options) {
     });
   });
 
-  const smtp = {
+  this.configuration = {
     id,
     port,
     host,
@@ -173,7 +173,7 @@ function SMTP(skyfall, options) {
   this.start = (callback) => {
     skyfall.events.emit({
       type: 'smtp:server:starting',
-      data: smtp,
+      data: this.configuration,
       source: id
     });
 
@@ -192,20 +192,20 @@ function SMTP(skyfall, options) {
       }
       skyfall.events.emit({
         type: 'smtp:server:started',
-        data: smtp,
+        data: this.configuration,
         source: id
       });
 
       if (callback) {
         return callback();
       }
-      return smtp;
+      return this.configuration;
     });
   };
 
-  skyfall.utils.hidden(smtp, 'start', this.start);
+  skyfall.utils.hidden(this.configuration, 'start', this.start);
 
-  return smtp;
+  return this.configuration;
 }
 
 module.exports = {
