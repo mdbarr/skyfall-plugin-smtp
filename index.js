@@ -169,27 +169,40 @@ function SMTP(skyfall, options) {
     host
   };
 
-  skyfall.events.emit({
-    type: 'smtp:server:starting',
-    data: smtp,
-    source: id
-  });
+  this.start = (callback) => {
+    skyfall.events.emit({
+      type: 'smtp:server:starting',
+      data: smtp,
+      source: id
+    });
 
-  this.server.listen(port, host, (error) => {
-    if (error) {
-      skyfall.events.emit({
-        type: 'smtp:server:error',
-        data: error,
-        source: id
-      });
-    } else {
+    this.server.listen(port, host, (error) => {
+      if (error) {
+        skyfall.events.emit({
+          type: 'smtp:server:error',
+          data: error,
+          source: id
+        });
+
+        if (callback) {
+          return callback(error);
+        }
+        return error;
+      }
       skyfall.events.emit({
         type: 'smtp:server:started',
         data: smtp,
         source: id
       });
-    }
-  });
+
+      if (callback) {
+        return callback();
+      }
+      return smtp;
+    });
+  };
+
+  skyfall.utils.hidden(smtp, 'start', this.start);
 
   return smtp;
 }
