@@ -89,7 +89,7 @@ function SMTP(skyfall, options) {
       if (callbacks.onMailFrom(address, session)) {
         return callback();
       }
-      return callback(new Error(`Mail from ${ address } not accepted`));
+      return callback(new Error(`Mail from ${ address.address } not accepted`));
     }
     return callback();
   };
@@ -102,13 +102,13 @@ function SMTP(skyfall, options) {
       if (callbacks.onRcptTo(address, session)) {
         return callback();
       }
-      return callback(new Error(`Mail to ${ address } not accepted`));
+      return callback(new Error(`Mail to ${ address.address } not accepted`));
     } else if (this.domains.size) {
-      const domain = address.replace(/^.*@/, '');
+      const domain = address.address.replace(/^.*@/, '');
       if (this.domains.has(domain)) {
         return callback();
       }
-      return callback(new Error(`Mail to ${ address } not accepted`));
+      return callback(new Error(`Mail to ${ address.address } not accepted`));
     }
     return callback();
   };
