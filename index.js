@@ -58,7 +58,7 @@ function SMTP(skyfall, options) {
         return callback();
       }
       return callback(new Error(`Connection not allowed from ${ session.remoteAddress }`));
-    } else if (typeof accessControl === 'function') {
+    } else if (accessControl && typeof accessControl.check === 'function') {
       if (accessControl.check(session.remoteAddress)) {
         return callback();
       }
@@ -102,6 +102,12 @@ function SMTP(skyfall, options) {
   const onData = (stream, session, callback) => {
     simpleParser(stream, (error, message) => {
       if (error) {
+        skyfall.events.emit({
+          type: 'smtp:server:error',
+          data: error,
+          source: id
+        });
+
         return callback(error);
       }
 
@@ -123,12 +129,10 @@ function SMTP(skyfall, options) {
   this.configure = (config) => {
     secure = Boolean(config.secure || config.key && config.certificate);
 
-    if (config.port) {
-      if (config.port === 'auto') {
-        port = secure ? 587 : 25;
-      } else {
-        port = Number(config.port) || 25;
-      }
+    if (!config.port || config.port === 'auto') {
+      port = secure ? 587 : 25;
+    } else {
+      port = Number(config.port) || 25;
     }
 
     if (config.host) {
@@ -162,12 +166,12 @@ function SMTP(skyfall, options) {
     this.server = new SMTPServer({
       secure,
       key: config.key ? fs.readFileSync(config.key) : null,
-      cert: (config.certificate || config.cert) ?
+      cert: config.certificate || config.cert ?
         fs.readFileSync(config.certificate || config.cert) : null,
       name: config.name || 'skyfall-smtp-server',
       size: Number(config.size) || 10485760, // 10MB
       authOptional: config.authOptional !== undefined ? config.authOptional :
-        !Boolean(users.size || callbacks.onAuth),
+        !(users.size || callbacks.onAuth),
       allowInsecureAuth: config.allowInsecureAuth !== undefined ?
         config.allowInsecureAuth : true,
       disableReverseLookup: config.disableReverseLookup !== undefined ?
