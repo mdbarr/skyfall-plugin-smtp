@@ -127,12 +127,12 @@ function SMTP(skyfall, options) {
   //////////
 
   this.configure = (config) => {
-    secure = Boolean(config.secure || config.key && config.certificate);
+    secure = Boolean(config.secure || config.port === 465);
 
     if (!config.port || config.port === 'auto') {
-      port = secure ? 587 : 25;
+      port = secure ? 465 : 587
     } else {
-      port = Number(config.port) || 25;
+      port = Number(config.port) || 587;
     }
 
     if (config.host) {
