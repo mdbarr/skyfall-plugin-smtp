@@ -1,6 +1,6 @@
 {
   "name": "@mdbarr/skyfall-plugin-smtp",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Skyfall SMTP Server Plugin",
   "main": "index.js",
   "repository": "git@github.com:mdbarr/skyfall-plugin-smtp.git",
