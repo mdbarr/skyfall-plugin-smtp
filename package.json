@@ -9,11 +9,11 @@
   "private": false,
   "dependencies": {
     "@mdbarr/ip-access-control": "^0.1.0",
-    "mailparser": "^2.7.1",
+    "mailparser": "^2.7.7",
     "smtp-server": "^3.5.0"
   },
   "devDependencies": {
-    "eslint": "^6.2.2"
+    "eslint": "^6.7.2"
   },
   "scripts": {
     "lint": "eslint index.js"
