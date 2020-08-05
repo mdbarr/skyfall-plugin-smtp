@@ -3,7 +3,7 @@
 const fs = require('fs');
 const { SMTPServer } = require('smtp-server');
 const { simpleParser } = require('mailparser');
-const IPAccessControl = require('@mdbarr/ip-access-control');
+const IPAccessControl = require('@hyperingenuity/ip-access-control');
 
 function SMTP(skyfall, options) {
   const id = skyfall.utils.id();
