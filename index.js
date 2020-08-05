@@ -5,7 +5,7 @@ const { SMTPServer } = require('smtp-server');
 const { simpleParser } = require('mailparser');
 const IPAccessControl = require('@hyperingenuity/ip-access-control');
 
-function SMTP(skyfall, options) {
+function SMTP (skyfall, options) {
   const id = skyfall.utils.id();
 
   let port = 25;
@@ -105,7 +105,7 @@ function SMTP(skyfall, options) {
         skyfall.events.emit({
           type: 'smtp:server:error',
           data: error,
-          source: id
+          source: id,
         });
 
         return callback(error);
@@ -115,9 +115,9 @@ function SMTP(skyfall, options) {
         type: 'smtp:server:message',
         data: {
           ...message,
-          session
+          session,
         },
-        source: id
+        source: id,
       });
 
       return callback();
@@ -130,7 +130,7 @@ function SMTP(skyfall, options) {
     secure = Boolean(config.secure || config.port === 465);
 
     if (!config.port || config.port === 'auto') {
-      port = secure ? 465 : 587
+      port = secure ? 465 : 587;
     } else {
       port = Number(config.port) || 587;
     }
@@ -185,14 +185,14 @@ function SMTP(skyfall, options) {
       onConnect,
       onMailFrom,
       onRcptTo,
-      onData
+      onData,
     });
 
     this.server.on('error', (error) => {
       skyfall.events.emit({
         type: 'smtp:server:error',
         data: error,
-        source: id
+        source: id,
       });
     });
 
@@ -200,7 +200,7 @@ function SMTP(skyfall, options) {
       id,
       port,
       host,
-      mode: config.lmtp ? 'lmtp' : 'smtp'
+      mode: config.lmtp ? 'lmtp' : 'smtp',
     };
 
     skyfall.utils.hidden(this.configuration, 'start', this.start);
@@ -215,7 +215,7 @@ function SMTP(skyfall, options) {
       skyfall.events.emit({
         type: 'smtp:server:error',
         data: error,
-        source: id
+        source: id,
       });
 
       if (callback) {
@@ -227,7 +227,7 @@ function SMTP(skyfall, options) {
     skyfall.events.emit({
       type: 'smtp:server:starting',
       data: this.configuration,
-      source: id
+      source: id,
     });
 
     return this.server.listen(port, host, (error) => {
@@ -235,7 +235,7 @@ function SMTP(skyfall, options) {
         skyfall.events.emit({
           type: 'smtp:server:error',
           data: error,
-          source: id
+          source: id,
         });
 
         if (callback) {
@@ -247,7 +247,7 @@ function SMTP(skyfall, options) {
       skyfall.events.emit({
         type: 'smtp:server:started',
         data: this.configuration,
-        source: id
+        source: id,
       });
 
       if (callback) {
@@ -266,5 +266,5 @@ module.exports = {
   name: 'smtp',
   install: (skyfall, options) => {
     skyfall.smtp = new SMTP(skyfall, options);
-  }
+  },
 };
