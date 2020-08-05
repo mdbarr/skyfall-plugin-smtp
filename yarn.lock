@@ -23,10 +23,10 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@mdbarr/ip-access-control@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@mdbarr/ip-access-control/-/ip-access-control-0.1.0.tgz#abd3ff201a3edcb7141838f48e76e4786665066f"
-  integrity sha512-xZ/n4GJS+yZuS0thX9rGgcTerkdvbJe84xhD3zxlmk0Wd8PXY80fwYnE3Mw7PRPUafwzHVlOoQoUceeE7V1z2g==
+"@hyperingenuity/ip-access-control@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@hyperingenuity/ip-access-control/-/ip-access-control-0.3.0.tgz#763feefb44cea6e8700120474a8fa1a6e3096c95"
+  integrity sha512-Gh1FmRaOx3h5NqxenYRY57MNFmhndXGjL2p5pcKw7khHE2jv5tKhvIZU/BEE/b/KycAhHQreZfkglXb/n/5Yyg==
   dependencies:
     cidr-matcher "^2.1.1"
 
