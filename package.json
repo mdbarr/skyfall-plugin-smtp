@@ -9,11 +9,11 @@
   "private": false,
   "dependencies": {
     "@hyperingenuity/ip-access-control": "^0.3.0",
-    "mailparser": "^2.8.1",
-    "smtp-server": "^3.7.0"
+    "mailparser": "^3.0.1",
+    "smtp-server": "^3.8.0"
   },
   "devDependencies": {
-    "eslint": "^7.8.1"
+    "eslint": "^7.16.0"
   },
   "scripts": {
     "lint": "eslint index.js"
